@@ -33,6 +33,7 @@ namespace Arrowgene.Ddon.GameServer.Party
 
         public readonly ulong ContentId;
         public bool ExmInProgress;
+        public int ExmInitialPartySize;
 
         public InstanceEnemyManager InstanceEnemyManager { get; }
         public SharedQuestStateManager QuestState { get; }
@@ -221,6 +222,7 @@ namespace Arrowgene.Ddon.GameServer.Party
                 if (ContentId == 0 && Leader is null)
                 {
                     // Leaderless check only applies for regular parties.
+                    _partyManager.RemovePartyInvitation(client);
                     throw new ResponseErrorException(ErrorCode.ERROR_CODE_PARTY_INVITE_FAIL_REASON_NO_LEADER,
                         $"[PartyId:{Id}][Accept] has no leader");
                 }

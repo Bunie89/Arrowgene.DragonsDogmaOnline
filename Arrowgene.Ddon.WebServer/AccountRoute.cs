@@ -34,6 +34,10 @@ namespace Arrowgene.Ddon.WebServer
             public string Token { get; set; }
         }
 
+        private class AccountRouteException(string message) : Exception(message)
+        {
+        }
+
         private class AccountVerification
         {
             public bool Error { get; set; }
@@ -50,32 +54,24 @@ namespace Arrowgene.Ddon.WebServer
 
                 if (Username.Trim().Length == 0)
                 {
-                    Error = true;
-                    Message = "Account ID cannot be empty";
-                    return;
+                    throw new AccountRouteException("Account ID cannot be empty.");
                 }
 
                 // Disallow any whitespace.
 
                 if (Regex.IsMatch(Username, @"\s"))
                 {
-                    Error = true;
-                    Message = "Account ID cannot contain spaces";
-                    return;
+                    throw new AccountRouteException("Account ID cannot contain spaces.");
                 }
 
                 if (Password.Trim().Length == 0)
                 {
-                    Error = true;
-                    Message = "Password cannot be empty";
-                    return;
+                    throw new AccountRouteException("Password cannot be empty.");
                 }
 
                 if (Regex.IsMatch(Password, @"\s"))
                 {
-                    Error = true;
-                    Message = "Password cannot contain spaces";
-                    return;
+                    throw new AccountRouteException("Password cannot contain spaces.");
                 }
             }
         }
@@ -93,44 +89,39 @@ namespace Arrowgene.Ddon.WebServer
                 return await WebResponse.InternalServerError();
             }
 
-            AccountResponse res = new AccountResponse();
-            AccountVerification accountCheck = new(req.Account, req.Password);
+            AccountResponse res = new();
+            WebResponse response = new();
 
-            switch (req.Action)
+            try
             {
-                case "login":
+                AccountVerification accountCheck = new(req.Account, req.Password);
 
-                    string token = CreateToken(req.Account, req.Password);
-                    if (token == null)
-                    {
-                        res.Error = "Account or password wrong";
+                if (_database.CheckBannedIp(request.Host))
+                {
+                    throw new AccountRouteException("Your IP has been banned.");
+                }
+
+                switch (req.Action)
+                {
+                    case "login":
+                        string token = CreateToken(req.Account, req.Password);
+                        res.Message = "Login Success";
+                        res.Token = token;
+                        response.StatusCode = 200;
                         break;
-                    }
-
-                    res.Message = "Login Success";
-                    res.Token = token;
-                    break;
-                case "create":
-
-                    if (accountCheck.Error)
-                    {
-                        res.Error = accountCheck.Message;
+                    case "create":
+                        Account account = CreateAccount(req.Account, $"{req.Account}@dd.on", req.Password);
+                        res.Message = "Account created";
+                        response.StatusCode = 201;
                         break;
-                    }
-
-                    Account account = CreateAccount(req.Account, $"{req.Account}@dd.on", req.Password);
-                    if (account == null)
-                    {
-                        res.Error = "Account already exists";
-                        break;
-                    }
-
-                    res.Message = "Account created";
-                    break;
+                }
+            }
+            catch (AccountRouteException ex)
+            {
+                res.Error = ex.Message;
+                response.StatusCode = 401;
             }
 
-            WebResponse response = new WebResponse();
-            response.StatusCode = 200;
             await response.WriteJsonAsync(res);
             return response;
         }
@@ -141,7 +132,7 @@ namespace Arrowgene.Ddon.WebServer
             if (account != null)
             {
                 Logger.Error($"{name} - CreateAccount: account already taken");
-                return null;
+                throw new AccountRouteException("Account already exists.");
             }
 
             string hash = PasswordHash.CreateHash(password);
@@ -155,13 +146,19 @@ namespace Arrowgene.Ddon.WebServer
             if (account == null)
             {
                 Logger.Error($"{name} - CreateToken: account does not exist");
-                return null;
+                throw new AccountRouteException("Account or password wrong.");
             }
 
             if (!PasswordHash.Verify(password, account.Hash))
             {
                 Logger.Error($"{name} - CreateToken: wrong password provided");
-                return null;
+                throw new AccountRouteException("Account or password wrong.");
+            }
+
+            if (account.State <= AccountStateType.Banned)
+            {
+                Logger.Error($"{name} - CreateToken: attempted login to banned account.");
+                throw new AccountRouteException("This account has been banned.");
             }
 
             account.LoginToken = GameToken.GenerateLoginToken();

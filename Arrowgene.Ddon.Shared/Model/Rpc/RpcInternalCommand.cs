@@ -14,11 +14,16 @@ namespace Arrowgene.Ddon.Shared.Model.Rpc
         AreaRankResetStart, //null
         AreaRankResetEnd, //null
         BoardQuestDailyRotation, //null
+        StampReset, //null
 
         //InternalChatRoute
         SendTellMessage, // RpcChatData
         SendClanMessage, // RpcChatData
         SendShoutMessage, // RpcChatData
+        SendMail, // RpcChatData
+        SendGroupMessage, // RpcChatData
+        JoinGroupChat, // RpcPacketData
+        LeaveGroupChat, // RpcPacketData
 
         //PacketRoute
         AnnouncePacketAll, // RpcPacketData

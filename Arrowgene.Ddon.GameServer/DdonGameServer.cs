@@ -96,6 +96,7 @@ namespace Arrowgene.Ddon.GameServer
             RentalPawnManager = new RentalPawnManager(this);
             OrbUnlockManager = new OrbUnlockManager(this);
             BitterblackMazeManager = new BitterblackMazeManager(this);
+            GroupChatManager = new GroupChatManager(this);
 
             S2CStageGetStageListRes stageListPacket =
                 EntitySerializer.Get<S2CStageGetStageListRes>().Read(GameDump.data_Dump_19);
@@ -143,6 +144,7 @@ namespace Arrowgene.Ddon.GameServer
         public BitterblackMazeManager BitterblackMazeManager { get; }
         public ChatLogHandler ChatLogHandler { get; }
         public LightQuestManager LightQuestManager { get; }
+        public GroupChatManager GroupChatManager { get; }
 
         public List<CDataStageInfo> StageList { get; }
 
@@ -266,7 +268,10 @@ namespace Arrowgene.Ddon.GameServer
             AddHandler(new BazaarReExhibitHandler(this));
 
             AddHandler(new BinarySaveSetCharacterBinSavedataHandler(this));
+
             AddHandler(new BlackListGetBlackListHandler(this));
+            AddHandler(new BlackListAddBlackListHandler(this));
+            AddHandler(new BlackListRemoveBlackListHandler(this));
 
             AddHandler(new ActionSetPlayerActionHistoryHandler(this));
 
@@ -404,7 +409,10 @@ namespace Arrowgene.Ddon.GameServer
             AddHandler(new GpGetGpHandler(this));
             AddHandler(new GpGpCourseGetAvailableListHandler(this));
 
-            AddHandler(new GroupChatGroupChatGetMemberListHandler(this));
+            AddHandler(new GroupChatGetMemberListHandler(this));
+            AddHandler(new GroupChatInviteCharacterHandler(this));
+            AddHandler(new GroupChatKickCharacterHandler(this));
+            AddHandler(new GroupChatLeaveCharacterHandler(this));
 
             AddHandler(new InnGetPenaltyHealStayPrice(this));
             AddHandler(new InnGetStayPriceHandler(this));
@@ -488,6 +496,9 @@ namespace Arrowgene.Ddon.GameServer
             AddHandler(new MailMailGetListDataHandler(this));
             AddHandler(new MailMailGetListFootHandler(this));
             AddHandler(new MailMailGetListHeadHandler(this));
+            AddHandler(new MailMailGetTextHandler(this));
+            AddHandler(new MailMailDeleteHandler(this));
+            AddHandler(new MailMailSendHandler(this));
             AddHandler(new MailSystemMailGetListDataHandler(this));
             AddHandler(new MailSystemMailGetListFootHandler(this));
             AddHandler(new MailSystemMailGetListHeadHandler(this));
@@ -587,6 +598,7 @@ namespace Arrowgene.Ddon.GameServer
             AddHandler(new ProfileSetMatchingProfileHandler(this));
             AddHandler(new ProfileSetPawnProfileHandler(this));
             AddHandler(new ProfileSetPawnProfileCommentHandler(this));
+            AddHandler(new ProfileSetMessageSetHandler(this));
 
             AddHandler(new Quest_11_60_16_Handler(this));
             AddHandler(new QuestCancelHandler(this));
